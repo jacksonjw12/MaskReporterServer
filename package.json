@@ -19,6 +19,7 @@
   "homepage": "https://github.com/jacksonjw12/MaskReporterServer#readme",
   "dependencies": {
     "express": "^4.17.1",
-    "express-session": "^1.17.1"
+    "express-session": "^1.17.1",
+    "package.json": "^2.0.1"
   }
 }

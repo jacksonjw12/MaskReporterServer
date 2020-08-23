@@ -2,6 +2,19 @@
  const CosmosClient = require('@azure/cosmos').CosmosClient
  const debug = require('debug')('maskModel')
 
+ function calcGeoDist( lat, lon, dist )
+ {
+    //Earth’s radius, sphere
+    const R=6378137.0
+
+    //Coordinate offsets in radians
+    const dLat = dist/R
+    const dLon = dist/(R*Math.cos(Math.PI*lat/180.0))
+
+     //OffsetPosition, decimal degrees
+     return {latitude: lat + dLat * 180.0/Math.PI, longitude: lon + dLon * 180.0/Math.PI }
+ }
+
  // For simplicity we'll set a constant partition key
  const partitionKey = undefined
  class maskModel {
@@ -35,14 +48,26 @@
      debug('Setting up the container...done!')
    }
 
-   async find(querySpec) {
+   async find(latitude, longitude, size) {
         // https://en.wikipedia.org/wiki/Decimal_degrees
-        debug('Querying for items from the database')
+        debug('Querying for items from the database ' + latitude + " " + longitude + " " + size )
         if (!this.container) {
         throw new Error('Collection is not initialized.')
         }
+        // acknowledged that this query breaks at the poles and at the international date line
+        const top_left = calcGeoDist( latitude, longitude, -1 *size)
+        const bottom_right = calcGeoDist( latitude, longitude, size)
+        const querySpec = {
+            query: "SELECT * FROM mask_reports mr where mr.location.latitude <= @lat_right and mr.location.latitude >= @lat_left and mr.location.longitude <= @lng_top and mr.location.longitude >= @lng_bottom",
+            parameters: [
+                { name: "@lat_left", value: top_left.latitude },
+                { name: "@lat_right", value: bottom_right.latitude },
+                { name: "@lng_top", value: top_left.longitude },
+                { name: "@lng_bottom", value: bottom_right.longitude }     
+               ]
+        }
+        debug(querySpec)
         const { resources } = await this.container.items.query(querySpec).fetchAll()
-        debug(resources)
         return resources
    }
 

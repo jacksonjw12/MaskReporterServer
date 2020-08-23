@@ -13,8 +13,8 @@ async function getMaskReports(req, res, mm) {
 		latitude, longitude, size (meters)
 	*/
 	debug('GET /maskReport')
-	result = await mm.find({query: "SELECT * FROM mask_reports mr where mr.location.latitude < -131 and mr.location.latitude > -132 and mr.location.longitude < 38 and mr.location.longitude > 37"})
-	debug("done")
+	debug(req.query)
+	result = await mm.find(parseFloat(req.query.latitude), parseFloat(req.query.longitude), parseFloat(req.query.size))
 	res.send(result)
 }
 

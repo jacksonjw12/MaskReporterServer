@@ -31,6 +31,9 @@ function setupHandlers(app, mm){
 
 		}
 	})
+	app.get('/test',(req, res) => {
+		res.send({"test!":"test!"});
+	})
 
 
 	app.get('/logout', (req, res) => {

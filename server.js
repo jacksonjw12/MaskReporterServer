@@ -1,5 +1,9 @@
+const maskModel = require('./maskModel')
+const CosmosClient = require('@azure/cosmos').CosmosClient
 const express = require('express');
 const app = express();
+const debug = require('debug')('server')
+
 
 
 let session = require('express-session');
@@ -9,9 +13,8 @@ let {MemoryStore} = require('express-session');
 //replace in-memory store with database store
 let store = new MemoryStore();
 
-// 
-
 var requestHandlers = require("./requestHandlers");
+
 
 function start(){
 
@@ -27,20 +30,37 @@ function start(){
 	app.use(express.json());
 
 
-	
-
-
-
-
 	app.use(express.static(__dirname + '/public'));
 	app.use(express.static(__dirname + '/media'));
 
+	// setup database
+	dbhost = process.env.DBHOST;
+	dbauthKey = process.env.DBAUTHKEY;
+	databaseId = "mask-reporter-db";
+	containerId = "mask_reports";
+	const cosmosClient = new CosmosClient({
+		endpoint: dbhost,
+		key: dbauthKey
+	  })
+
+	const mm = new maskModel(cosmosClient, databaseId, containerId)
+	mm.init(err => {
+		  console.error(err)
+		})
+		.catch(err => {
+		  console.error(err)
+		  console.error(
+			'Shutting down because there was an error settinig up the database.'
+		  )
+		  process.exit(1)
+		})
+
+
 	//register request handler functions
-	requestHandlers.setupHandlers(app);
+	requestHandlers.setupHandlers(app, mm);
 
 
-	//const port = 8080;
-	const port = process.env.PORT
+	const port = process.env.PORT ? process.env.PORT : 8080
 	app.listen(port, () => console.log(`Listening on port ${port}!`));
 
 

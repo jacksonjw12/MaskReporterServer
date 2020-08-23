@@ -1,3 +1,5 @@
+const debug = require('debug')('requestHandlers')
+
 function newId(){
 	var letters = "0123456789ABCD"
 	var color = ""
@@ -6,7 +8,17 @@ function newId(){
     return color;
 }
 
-function setupHandlers(app){
+async function getMaskReports(req, res, mm) {
+	/* query params
+		latitude, longitude, size (meters)
+	*/
+	debug('GET /maskReport')
+	result = await mm.find({query: "SELECT * FROM mask_reports mr where mr.location.latitude < -131 and mr.location.latitude > -132 and mr.location.longitude < 38 and mr.location.longitude > 37"})
+	debug("done")
+	res.send(result)
+}
+
+function setupHandlers(app, mm){
 
 	app.get('/', (req, res) => {
 		console.log(req.session.username)
@@ -28,6 +40,7 @@ function setupHandlers(app){
 	})
 
 	app.get('/requestAuthKey',(req,res)=>{
+		debug('GET /reqeustAuthKey')
 		req.session.authKey = newId();
 		res.send({"authKey":req.session.authKey});
 	})
@@ -42,6 +55,29 @@ function setupHandlers(app){
 			res.send({"authorized":false})
 		}
 	})
+
+	// mask reporting
+	app.post('/maskReport', (req, res) => {
+		/* schema
+		{ 
+			user_id: <userid>,
+			location: {
+				latitude: <lat>,
+				longitude: <lng>,
+				precision: <prec>
+			},
+			maskval: <maskiness: 1-5>
+		}
+		*/
+		debug('POST /maskReport')
+		mm.addItem(req.body)
+		res.send()
+	})
+
+	// SELECT * FROM mask_reports mr where 
+    // mr.location.latitude < -131 and mr.location.latitude > -132 and
+	// mr.location.longitude < 38 and mr.location.longitude > 37
+	app.get('/maskReport', (req, res) => getMaskReports(req, res, mm))
 
 	// app.get('/login', (req, res) => {
 

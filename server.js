@@ -18,7 +18,7 @@ var requestHandlers = require("./requestHandlers");
 
 function start(){
 	// environment variables needed
-	// xport PORT=8081
+	// export PORT=8081
   	// export DBHOST=https://mask-reporter-db.documents.azure.com:443/
   	// export DBAUTHKEY={get from azure}
   	// export DEBUG=* // to turn on all debug output

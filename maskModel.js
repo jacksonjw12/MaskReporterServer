@@ -15,8 +15,6 @@
      return {latitude: lat + dLat * 180.0/Math.PI, longitude: lon + dLon * 180.0/Math.PI }
  }
 
- // For simplicity we'll set a constant partition key
- const partitionKey = undefined
  class maskModel {
    /**
     * Manages reading, adding, and updating Tasks in Cosmos DB
@@ -66,15 +64,13 @@
                 { name: "@lng_bottom", value: bottom_right.longitude }     
                ]
         }
-        debug(querySpec)
+        //debug(querySpec)
         const { resources } = await this.container.items.query(querySpec).fetchAll()
         return resources
    }
 
    async addItem(item) {
      debug('Adding an item to the database')
-     //item.date = Date.now()
-     //item.completed = false
      const { resource: doc } = await this.container.items.create(item)
      return doc
    }

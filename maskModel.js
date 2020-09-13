@@ -2,18 +2,18 @@
  const CosmosClient = require('@azure/cosmos').CosmosClient
  const debug = require('debug')('maskModel')
 
- function calcGeoDist( lat, lon, dist )
- {
-    //Earth’s radius, sphere
-    const R=6378137.0
+function calcGeoDist( lat, lon, dist )
+{
+  //Earth’s radius, sphere
+  const R=6378137.0
 
-    //Coordinate offsets in radians
-    const dLat = dist/R
-    const dLon = dist/(R*Math.cos(Math.PI*lat/180.0))
+  //Coordinate offsets in radians
+  const dLat = dist/R
+  const dLon = dist/(R*Math.cos(Math.PI*lat/180.0))
 
-     //OffsetPosition, decimal degrees
-     return {latitude: lat + dLat * 180.0/Math.PI, longitude: lon + dLon * 180.0/Math.PI }
- }
+    //OffsetPosition, decimal degrees
+    return {latitude: lat + dLat * 180.0/Math.PI, longitude: lon + dLon * 180.0/Math.PI }
+}
 
  class maskModel {
    /**
@@ -56,12 +56,12 @@
         const top_left = calcGeoDist( latitude, longitude, -1 *size)
         const bottom_right = calcGeoDist( latitude, longitude, size)
         const querySpec = {
-            query: "SELECT * FROM mask_reports mr where mr.location.latitude <= @lat_right and mr.location.latitude >= @lat_left and mr.location.longitude <= @lng_top and mr.location.longitude >= @lng_bottom",
+            query: "SELECT * FROM mask_reports mr where mr.location.latitude <= @lat_right and mr.location.latitude >= @lat_left and mr.location.longitude >= @lng_bottom and mr.location.longitude <= @lng_top",
             parameters: [
                 { name: "@lat_left", value: top_left.latitude },
                 { name: "@lat_right", value: bottom_right.latitude },
-                { name: "@lng_top", value: top_left.longitude },
-                { name: "@lng_bottom", value: bottom_right.longitude }     
+                { name: "@lng_bottom", value: top_left.longitude },
+                { name: "@lng_top", value: bottom_right.longitude }     
                ]
         }
         //debug(querySpec)

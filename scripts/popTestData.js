@@ -70,6 +70,24 @@ async function init(dbAuthKey, databaseId, collectionId) {
     return ret
 }
 
+function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+    var R = 6371; // Radius of the earth in km
+    var dLat = deg2rad(lat2-lat1);  // deg2rad below
+    var dLon = deg2rad(lon2-lon1); 
+    var a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2)
+      ; 
+    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+    var d = R * c; // Distance in km
+    return d;
+  }
+  
+  function deg2rad(deg) {
+    return deg * (Math.PI/180)
+  }
+
 function generatePoints(args)
 {
     //debug("generagePoints")
@@ -105,8 +123,33 @@ function generatePoints(args)
         points.push({
             latitude: a.latitude,
             longitude: b.longitude,
-            mask: maskiness[Math.round(100.0 * Math.random())]
+            mask: maskiness[Math.floor(100.0 * Math.random())]
         })
+    }
+
+    // provide some grouping of data by allowing influencers to change neighbors
+    for ( i=0 ; i<numpoints ; i++ ) {
+        // 5% chance of this point being an influencer
+        if ( Math.random() >= 0.05 ) {
+            continue
+        }
+        // this point is an influencer so look for neighbors (<100 meters) and bring them closer to same maskiness
+        for ( j=0 ; j<numpoints ; j++ ) {
+            if ( j == i ) {
+                continue;       //don't influence yourself
+            }
+
+            if ( getDistanceFromLatLonInKm(points[i].latitude, points[i].longitude, points[j].latitude, points[j].longitude) <= 0.1 ) {
+                // influence this point if they're not already the same
+                if ( points[j].mask < points[i].mask ) {
+                    points[j].mask++;
+                }
+                else if ( points[j].mask > points[i].mask ) {
+                    points[j].mask--;
+                }
+            }
+
+        }
     }
 
     return points
@@ -151,9 +194,26 @@ function outputKML(points)
     console.log("</kml>")
 }
 
+async function outputDB(args, dbInfo, points)
+{
+    for ( i=0 ; i<points.length ; i++ ) {
+        report = { 
+			user_id: args.name,
+			location: {
+				latitude: points[i].latitude,
+				longitude: points[i].longitude,
+				precision: 10
+			},
+			maskval: points[i].mask + 1
+        }
+        await dbInfo.container.items.create(report)
+    }
+}
+
 async function main() {
     args = parseArgs()
 
+    dbInfo = {}
     if ( args.dest == "DB" ) {
         console.log("Populate DB")
         containerId = "mask_reports";
@@ -166,14 +226,14 @@ async function main() {
         }
 
         // setup the database
-        await init(dbauthKey, databaseId, containerId)
+        dbInfo = await init(dbauthKey, databaseId, containerId)
     }
 
     points = generatePoints(args)
 
     if (args.dest == "DB") {
         debug("Output to database")
-        debug("Done")
+        await outputDB(args, dbInfo, points)
     }
     else {
         outputKML(points)

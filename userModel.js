@@ -81,15 +81,13 @@ async login(user) {
 }
 
   async createToken(user) {
-    debug(user)
+    //debug(user)
     var token = jwt.sign(user, this.globalSecret, {expiresIn: '1h' });
-
-    // remove any old tokens
 
     // add the new token
     const { resource: doc } = await this.tokenContainer.items.create({"token": token, "user_id": user.user_id})
     
-    debug(token)
+    debug("created toke for user " + user.user_id)
     return token
   }
 
@@ -98,7 +96,7 @@ async login(user) {
     debug('Adding a user to the database ' + uuid)
     item.user_id = uuid
     const { resource: doc } = await this.container.items.create(item)
-    return doc
+    return {user_id: uuid, user_name: doc.user_name}
   }
 
   /*

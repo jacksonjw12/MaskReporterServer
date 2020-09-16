@@ -69,12 +69,12 @@ function calcGeoDist( lat, lon, dist )
         throw new Error('Collection is not initialized.')
       }
       const querySpec = {
-          query: "SELECT * FROM mask_reports mr where mr.location.latitude <= @lat_right and mr.location.latitude >= @lat_left and mr.location.longitude >= @lng_bottom and mr.location.longitude <= @lng_top",
+          query: "SELECT * FROM mask_reports mr where mr.location.latitude <= @lat_top and mr.location.latitude >= @lat_bot and mr.location.longitude >= @lng_left and mr.location.longitude <= @lng_right",
           parameters: [
-              { name: "@lat_left", value: top_left.latitude },
-              { name: "@lat_right", value: bottom_right.latitude },
-              { name: "@lng_bottom", value: top_left.longitude },
-              { name: "@lng_top", value: bottom_right.longitude }     
+              { name: "@lat_bot", value: bottom_right.latitude },
+              { name: "@lat_top", value: top_left.latitude },
+              { name: "@lng_left", value: top_left.longitude },
+              { name: "@lng_right", value: bottom_right.longitude }     
               ]
       }
       //debug(querySpec)

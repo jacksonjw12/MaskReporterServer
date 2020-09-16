@@ -46,27 +46,40 @@ function calcGeoDist( lat, lon, dist )
      debug('Setting up the container...done!')
    }
 
-   async find(latitude, longitude, size) {
+   async find(params) {
+      var top_left = {}, bottom_right = {}
+
+      if ( params.lat1 ) {
+        // 2 lat lng versions
+        debug("Query using 2 lat/lngs")
+        top_left.latitude = parseFloat(params.lat1)
+        bottom_right.longitude = parseFloat(params.lng1)
+        bottom_right.latitude = parseFloat(params.lat2)
+        top_left.longitude = parseFloat(params.lng2)
+      }
+      else {
+        // lat, lng and a distance (size)
         // https://en.wikipedia.org/wiki/Decimal_degrees
-        debug('Querying for items from the database ' + latitude + " " + longitude + " " + size )
-        if (!this.container) {
-        throw new Error('Collection is not initialized.')
-        }
+        debug('Querying for items from the database ' + params.latitude + " " + params.longitude + " " + params.size )
         // acknowledged that this query breaks at the poles and at the international date line
-        const top_left = calcGeoDist( latitude, longitude, -1 *size)
-        const bottom_right = calcGeoDist( latitude, longitude, size)
-        const querySpec = {
-            query: "SELECT * FROM mask_reports mr where mr.location.latitude <= @lat_right and mr.location.latitude >= @lat_left and mr.location.longitude >= @lng_bottom and mr.location.longitude <= @lng_top",
-            parameters: [
-                { name: "@lat_left", value: top_left.latitude },
-                { name: "@lat_right", value: bottom_right.latitude },
-                { name: "@lng_bottom", value: top_left.longitude },
-                { name: "@lng_top", value: bottom_right.longitude }     
-               ]
-        }
-        //debug(querySpec)
-        const { resources } = await this.container.items.query(querySpec).fetchAll()
-        return resources
+        top_left = calcGeoDist( parseFloat(params.latitude), parseFloat(params.longitude), -1 * parseFloat(params.size))
+        bottom_right = calcGeoDist( parseFloat(params.latitude), parseFloat(params.longitude), parseFloat(params.size))
+      }
+      if (!this.container) {
+        throw new Error('Collection is not initialized.')
+      }
+      const querySpec = {
+          query: "SELECT * FROM mask_reports mr where mr.location.latitude <= @lat_right and mr.location.latitude >= @lat_left and mr.location.longitude >= @lng_bottom and mr.location.longitude <= @lng_top",
+          parameters: [
+              { name: "@lat_left", value: top_left.latitude },
+              { name: "@lat_right", value: bottom_right.latitude },
+              { name: "@lng_bottom", value: top_left.longitude },
+              { name: "@lng_top", value: bottom_right.longitude }     
+              ]
+      }
+      //debug(querySpec)
+      const { resources } = await this.container.items.query(querySpec).fetchAll()
+      return resources
    }
 
    async addItem(item) {

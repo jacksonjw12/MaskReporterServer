@@ -60,7 +60,7 @@ async function getMaskReports(req, res) {
 	debug('GET /maskReport')
 	const mm = req.app.get('maskModel')
 	debug(req.query)
-	result = await mm.find(parseFloat(req.query.latitude), parseFloat(req.query.longitude), parseFloat(req.query.size))
+	result = await mm.find(req.query)
 	res.send(result)
 }
 
